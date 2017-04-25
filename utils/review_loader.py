@@ -52,7 +52,7 @@ def parse_single_review(review_text):
     except ValueError:
       print('the error is [{}] in: \n{}'.format(line, review_text))
     else:
-      result_dict[name] = value
+      result_dict[name] = value.strip()
 
   return result_dict
 
