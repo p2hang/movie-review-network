@@ -1,3 +1,6 @@
+from tfidf_vector_helper import get_review_id
+
+
 PRODUCT_ID = 'productId'
 USER_ID = 'userId'
 PROFILE_NAME = 'profileName'
@@ -63,6 +66,10 @@ def parse_single_review(review_text):
 class ReviewLoader:
   def __init__(self, data_path):
     self.data_path = data_path
+
+  def review_text_iter(self, verbose=False):
+    for review in self.data_iter(verbose):
+      yield get_review_id(review[PRODUCT_ID], review[USER_ID]), review[TEXT]
 
   def data_iter(self, verbose=False):
     """

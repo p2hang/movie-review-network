@@ -4,80 +4,81 @@ from nltk.tokenize import RegexpTokenizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from utils.review_loader import ReviewLoader, TEXT, PRODUCT_ID, USER_ID
+from utils.movie_reviews_loader import MovieReviewTextLoader
+from utils.tfidf_vector_helper import sparse_matrix_to_dict
 
-
-def text_loader(data_iter):
-  for review in data_iter(verbose=True):
-    yield review[TEXT]
+review_ids = []
 
 
 def main():
   in_file_path = 'data/movies.txt'
-  save_path = 'data/review_text_features.pkl'
-  get_tfidf_score_and_save(in_file_path, save_path)
+  feature_name_path = 'data/movie_feature_name.pkl'
+  feature_vector_path = 'data/movie_feature_vectors.txt'
+
+  # for each review
+  # loader = ReviewLoader(in_file_path)
+  # iterator = loader.review_text_iter
+
+  # for each movie
+  loader = MovieReviewTextLoader(in_file_path)
+  iterator = loader.data_iter
+  get_tfidf_score_and_save(iterator,feature_name_path, feature_vector_path)
 
 
-def get_tfidf_score_and_save(in_file_path, save_path):
+def get_tfidf_score_and_save(data_iter, feature_name_path, feature_vector_path):
   """
   Take the in file and parse the text in the review then compute all the tfidf scores,
   save the result in a file
   """
   tokenizer = RegexpTokenizer(r'\w+')
   tokenize = lambda doc: tokenizer.tokenize(doc)
-  loader = ReviewLoader(in_file_path)
-  text_iter = text_loader(loader.data_iter)
+  iterator = text_iter(data_iter)
 
   # vectorize the texts
-  vectorizer = TfidfVectorizer(norm='l2', min_df=0,
+  vectorizer = TfidfVectorizer(norm='l2',
+                               min_df=2,
+                               max_df=0.5,
                                use_idf=True,
                                smooth_idf=False,
                                sublinear_tf=True,
                                decode_error='ignore',
                                tokenizer=tokenize)
-  vectors = vectorizer.fit_transform(text_iter)
+  vectors = vectorizer.fit_transform(iterator)
   feature_names = vectorizer.get_feature_names()
 
-  # put feature names and vectors in a dictionary
-  features = {'name': feature_names, 'vectors': {}}
-  for review, feature_vec in zip(loader.data_iter(verbose=True), vectors):
-    features['vectors'][get_review_id(review[PRODUCT_ID], review[USER_ID])] = feature_vec
+  # save feature names
+  print('saving feature names...')
+  with open(feature_name_path, 'wb') as name_file:
+    pickle.dump(feature_names, name_file)
 
-  # save features to a file
-  pickle.dump(features, open(save_path, "wb"))
+  # save feature vectors
+  print('saving feature vectors')
+  counter = 0
+  with open(feature_vector_path, 'wb') as vector_file:
+    for review_id, feature_vec in zip(review_ids, vectors):
+      vector_file.write(review_id + ':')
+      vector_file.write(str(sparse_matrix_to_dict(feature_vec)))
+      vector_file.write('\n')
+
+      counter += 1
+      if counter % 10000 == 0:
+        print('Wrote {:,} features'.format(counter))
+
 
   # check the score of real words
   # print_feature_ranking(features['name'], features['vectors']['B000063W1R_A2M6FIWDCDWDVM'])
+  # print(len(feature_names))
+  # print(features['vectors'])
+  print('Done.')
 
 
 ###########################################################
 # Helper Methods
 ###########################################################
-def get_review_id(product_id, user_id):
-  """
-  Get id for a review with product id and user id
-  """
-  return '{}_{}'.format(product_id, user_id)
-
-
-def sparse_matrix_to_list(sparse_matrix):
-  """
-  Transform tfidf sparse matrix to a list of tuples(index, score)
-  """
-  matrix_as_list = sparse_matrix.todense().tolist()[0]
-  score_list = [pair for pair in zip(range(len(matrix_as_list)), matrix_as_list) if pair[1] > 0]
-  return score_list
-
-
-def print_feature_ranking(feature_names, vector):
-  """
-  print the word and score of the word in descending order.
-  :param feature_names: the mapping between index and word
-  :param vector: the sparse matrix contains the scores
-  """
-  feature_list = sparse_matrix_to_list(vector)
-  feature_list = sorted(feature_list, key=lambda t: t[1] * -1)
-  for word, score in [(feature_names[word_id], score) for (word_id, score) in feature_list]:
-    print('{0: <20} {1}'.format(word, score))
+def text_iter(data_iter):
+  for text_id, text in data_iter(verbose=True):
+    review_ids.append(text_id)
+    yield text
 
 
 if __name__ == '__main__':
