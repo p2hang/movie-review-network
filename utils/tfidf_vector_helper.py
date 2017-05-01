@@ -5,7 +5,8 @@ def sparse_matrix_to_dict(sparse_matrix):
   dok = sparse_matrix.todok()
   vec_dict = {}
   for k, v in dok.items():
-    vec_dict[k[1]] = round(v, 3)
+    if v > 0.02:
+      vec_dict[k[1]] = round(v, 3)
   return vec_dict
 
 
