@@ -35,7 +35,7 @@ def get_tfidf_score_and_save(data_iter, feature_name_path, feature_vector_path):
 
   # vectorize the texts
   vectorizer = TfidfVectorizer(norm='l2',
-                               min_df=10,
+                               min_df=20,
                                max_df=0.4,
                                use_idf=True,
                                smooth_idf=False,

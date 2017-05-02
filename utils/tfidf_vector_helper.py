@@ -16,7 +16,7 @@ def print_feature_ranking(feature_names, vector):
   :param feature_names: the mapping between index and word
   :param vector: the sparse matrix contains the scores
   """
-  feature_list = sorted(vector, key=lambda t: t[1] * -1)
+  feature_list = sorted(vector.items(), key=lambda t: t[1] * -1)[:10]
   for word, score in [(feature_names[word_id], score) for (word_id, score) in feature_list]:
     print('{0: <20} {1}'.format(word, score))
 
