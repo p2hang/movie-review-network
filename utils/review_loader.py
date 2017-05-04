@@ -1,4 +1,4 @@
-from tfidf_vector_helper import get_review_id
+from utils.tfidf_vector_helper import get_review_id
 
 
 PRODUCT_ID = 'productId'
@@ -85,7 +85,7 @@ class ReviewLoader:
       review/text: texttexttexttext
     }
     """
-    with open(self.data_path, 'r') as infile:
+    with open(self.data_path, 'r', errors='ignore') as infile:
       paragraph = ''
       counter = 0
 

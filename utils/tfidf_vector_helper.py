@@ -5,7 +5,8 @@ def sparse_matrix_to_dict(sparse_matrix):
   dok = sparse_matrix.todok()
   vec_dict = {}
   for k, v in dok.items():
-    vec_dict[k[1]] = round(v, 3)
+    if v > 0.02:
+      vec_dict[k[1]] = round(v, 3)
   return vec_dict
 
 
@@ -15,7 +16,7 @@ def print_feature_ranking(feature_names, vector):
   :param feature_names: the mapping between index and word
   :param vector: the sparse matrix contains the scores
   """
-  feature_list = sorted(vector, key=lambda t: t[1] * -1)
+  feature_list = sorted(vector.items(), key=lambda t: t[1] * -1)[:10]
   for word, score in [(feature_names[word_id], score) for (word_id, score) in feature_list]:
     print('{0: <20} {1}'.format(word, score))
 
